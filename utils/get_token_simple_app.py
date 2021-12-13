@@ -38,7 +38,7 @@ chal = "0000000000000000000000000000000000000000000000000000000000000000"
 metadata = chal + "e0da" + "e0ee" + "0200" + "0210" + "0001"
 
 pmem = read_mem('../msp_bin/pmem.mem')
-att_size = 0x1000
+att_size = 0x20
 att_data = binascii.hexlify(pmem[:att_size])
 
 dkey = hmac_sha256(reverse_endian(key), reverse_endian(chal))

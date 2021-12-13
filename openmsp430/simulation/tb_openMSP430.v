@@ -207,6 +207,13 @@ integer            tmp_seed;
 integer            error;
 reg                stimulus_done;
 
+// VAPE metadata
+wire        [15:0] per_dout_vape_metadata;
+wire        [15:0] ER_min;
+wire        [15:0] ER_max;
+wire        [15:0] OR_min;
+wire        [15:0] OR_max;
+wire               exec_flag;
 
 //
 // Include files
@@ -404,6 +411,7 @@ openMSP430 dut (
     .puc_rst           (puc_rst),              // Main system reset
     .smclk             (smclk),                // ASIC ONLY: SMCLK
     .smclk_en          (smclk_en),             // FPGA ONLY: SMCLK enable
+    .exec_flag         (exec_flag),    // VAPE
 
 // INPUTs
     .cpu_en            (cpu_en),               // Enable CPU code execution (asynchronous)
@@ -429,7 +437,11 @@ openMSP430 dut (
     .reset_n           (reset_n),              // Reset Pin (low active, asynchronous)
     .scan_enable       (scan_enable),          // ASIC ONLY: Scan enable (active during scan shifting)
     .scan_mode         (scan_mode),            // ASIC ONLY: Scan mode
-    .wkup              (|wkup_in)              // ASIC ONLY: System Wake-up (asynchronous)
+    .wkup              (|wkup_in),             // ASIC ONLY: System Wake-up (asynchronous)
+    .ER_min            (ER_min),
+    .ER_max            (ER_max),       // VAPE
+    .OR_min            (OR_min),
+    .OR_max            (OR_max)       // VAPE
 );
 
 //
@@ -563,6 +575,25 @@ template_periph_16b #(.BASE_ADDR((15'd`PER_SIZE-15'h0070) & 15'h7ff8)) template_
     .puc_rst           (puc_rst)               // Main system reset
 );
 
+VAPE_metadata VAPE_metadata_0 (
+
+// OUTPUTs
+    .per_dout     (per_dout_vape_metadata), // Peripheral data output
+    .ER_min        (ER_min),        // VAPE ER_min
+    .ER_max        (ER_max),        // VAPE ER max
+    .OR_min        (OR_min),        // VAPE OR min
+    .OR_max        (OR_max),        // VAPE _OR_max
+
+// INPUTs
+    .mclk         (mclk),          // Main system clock
+    .per_addr     (per_addr),      // Peripheral address
+    .per_din      (per_din),       // Peripheral data input
+    .per_en       (per_en),        // Peripheral enable (high active)
+    .per_we       (per_we),        // Peripheral write enable (high active)
+    .puc_rst      (puc_rst),        // Main system reset
+    .exec_flag        (exec_flag)        // VAPE exec flag
+);
+
 
 //
 // Combine peripheral data bus
@@ -571,7 +602,8 @@ template_periph_16b #(.BASE_ADDR((15'd`PER_SIZE-15'h0070) & 15'h7ff8)) template_
 assign per_dout = per_dout_dio       |
                   per_dout_timerA    |
                   per_dout_temp_8b   |
-                  per_dout_temp_16b;
+                  per_dout_temp_16b  |
+                  per_dout_vape_metadata;
 
 
 //

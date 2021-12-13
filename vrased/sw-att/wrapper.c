@@ -3,7 +3,7 @@
 #define MAC_ADDR 0x0230
 #define KEY_ADDR 0x6A00
 #define ATTEST_DATA_ADDR 0xE000
-#define ATTEST_SIZE 0x1000
+#define ATTEST_SIZE 0x20
 #define METADATA_ADDR 0x140
 #define METADATA_SIZE 42 // 32-byte challenge, 2-byte ERmin, ERmax, ORmin, ORmax, EXEC
 #define CHAL_ADDR METADATA_ADDR
@@ -52,9 +52,9 @@ __attribute__ ((section (".do_mac.call"))) void Hacl_HMAC_SHA2_256_hmac_entry(ui
 	// K = HMAC(K, METADATA)
         hmac((uint8_t*) key, (uint8_t*) key, (uint32_t) 32, (uint8_t*) METADATA_ADDR, (uint32_t) METADATA_SIZE);
 
-/* XXX: The following step includes OR in the HMAC in software. 
- * This is only done due to a limitation on the OpenMSP430 inplementation, which prevents any writes to flash (program memory). 
- * This step would not be necessary in a real MSP430, since OR could be included in AR (which is in program memory), as discussed in APEX paper. 
+/* XXX: The following step includes OR in the HMAC in software.
+ * This is only done due to a limitation on the OpenMSP430 inplementation, which prevents any writes to flash (program memory).
+ * This step would not be necessary in a real MSP430, since OR could be included in AR (which is in program memory), as discussed in APEX paper.
  * This work-around OpenMSP430 limitation has *not* been formally verified. */
 // XXX: If your PoX application demands authenticated outputs uncomment the following block to include OR in the attestation result.
 
@@ -126,7 +126,3 @@ void VRASED (uint8_t *challenge, uint8_t *response, uint8_t operation) {
     // Return the HMAC value to the application:
     my_memcpy(response, (uint8_t*)MAC_ADDR, 32);
 }
-
-
-
-

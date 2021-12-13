@@ -189,7 +189,7 @@ Your FPGA should be now displayed on the hardware manager menu.
 
 Corresponds to a toy proof of execution, i.e., (1) execute "dummy_function", (2) compute proof of execution token via attestation.
 
-At the end of simple_app's simulation, attestation resulst in the correct authenticated token value: "F147037A5101BD98334B3C7AA4E34C24889F61E8EABDD31836761B50EEB8F311".
+At the end of simple_app's simulation, attestation resulst in the correct authenticated token value: "F811AD99457806F6FDDDE8E88B274AE1313249B1BC9A92468CA99D58F3D1BABD".
 
 This corresponds to attestation (HMAC-SHA256) computed over memory containg exec value 1 (valid proof of execution).
 See utils/get_token_simple_app.py for how this token is generated.

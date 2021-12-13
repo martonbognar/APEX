@@ -90,3 +90,5 @@
 //../../../rtl/verilog/periph/omsp_uart.v
 ../openmsp430/msp_periph/template_periph_8b.v
 ../openmsp430/msp_periph/template_periph_16b.v
+../vrased/hw-mod/VAPE_metadata.v
+../vrased/hw-mod/chalmem.v
