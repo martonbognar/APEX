@@ -15,11 +15,11 @@
 // ERMIN/MAX_VAL should correspond to address of dummy_function
 #define ERMIN_VAL 0xE0DA
 #define ERMAX_VAL 0xE0EE
-#define ORMIN_VAL 0x200 
+#define ORMIN_VAL 0x200
 #define ORMAX_VAL 0x210
 
 
-extern void VRASED (uint8_t *challenge, uint8_t *response, uint8_t operation); 
+extern void VRASED (uint8_t *challenge, uint8_t *response, uint8_t operation);
 
 extern void my_memset(uint8_t* ptr, int len, uint8_t val);
 
@@ -32,13 +32,12 @@ void dummy_function() {
 }
 
 void success() {
-    __asm__ volatile("bis     #240,   r2" "\n\t");  
+    __asm__ volatile("bis     #240,   r2" "\n\t");
 }
 
 void fail() {
-    __asm__ volatile("bis     #240,   r2" "\n\t");  
+    __asm__ volatile("bis     #240,   r2" "\n\t");
 }
-
 
 int main() {
     uint8_t response[32];
@@ -65,21 +64,22 @@ int main() {
     // Sanity check
     if(ERmin != ERMIN_VAL || ERmax != ERMAX_VAL || ORmin != ORMIN_VAL || ORmax != ORMAX_VAL || exec == 1) fail();
 
+    my_memcpy(challenge, (uint8_t*)CHAL_ADDR, 32);
+
     // Execute ER
-    ((void(*)(void))ERmin)();                      
+    ((void(*)(void))ERmin)();
 
     // Call VRASED
-    my_memcpy(challenge, (uint8_t*)CHAL_ADDR, 32);
-    VRASED(challenge, response, 0);                 
+    VRASED(challenge, response, 0);
 
     // Write token to P3OUT one by one
     int i;
     for(i=0; i<32; i++) P3OUT = response[i];
 
     exec = *((uint16_t*)(EXEC_ADDR));
-    if(exec != 1) fail();  
+    if(exec != 1) fail();
 
     success();
-    
+
     return 0;
 }

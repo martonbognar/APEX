@@ -1,5 +1,5 @@
 import hmac
-import hashlib 
+import hashlib
 import binascii
 
 def hmac_sha256(key, message):
@@ -33,7 +33,7 @@ def read_mem(filepath):
 	out = bytearray(out)
 	return out
 
-key = "0123456789abcdef"
+key = "0123456789abcdef0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
 chal = "0000000000000000000000000000000000000000000000000000000000000000"
 metadata = chal + "e0da" + "e0ee" + "0200" + "0210" + "0001"
 

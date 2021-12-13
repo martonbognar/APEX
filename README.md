@@ -166,7 +166,7 @@ In Vivado simulation, for all test-cases provided by default, the final value of
 
 To determine the address of an instruction, e.g, addresses of the "success" function as well start and end addresses of ER (values of ER_min and ER_max, per APEX's paper) one can check the compilation file at scripts/tmp-build/XX/vrased.lst  (where XX is the name of the test-case, i.e., if you ran "make simple_app", XX=simple_app). In this file search for the name of the function of interest, e.g., "success" or "dummy_function", etc.
 
-#### NOTE: To simulate a different test-case you need to re-run "make test-case_name" to generate the corresponding pmem.mem file and re-run the synthesis step (step 10 in [Creating a Vivado Project for APEX]) on Vivado. 
+#### NOTE: To simulate a different test-case you need to re-run "make test-case_name" to generate the corresponding pmem.mem file and re-run the synthesis step (step 10 in [Creating a Vivado Project for APEX]) on Vivado.
 
 ## Deploying APEX on Basys3 FPGA
 
@@ -183,13 +183,13 @@ Your FPGA should be now displayed on the hardware manager menu.
 
 ## Description of Provided test-cases
 
-	For details on how APEX controls the exec flag to generate unforgeable proofs of execution (PoX) please check APEX paper. 
+	For details on how APEX controls the exec flag to generate unforgeable proofs of execution (PoX) please check APEX paper.
 
 #### 1- simple_app:
 
 Corresponds to a toy proof of execution, i.e., (1) execute "dummy_function", (2) compute proof of execution token via attestation.
 
-At the end of simple_app's simulation, attestation resulst in the correct authenticated token value: "3622822327FC4E8FE649D44CB964E98C50050446364925B10D533BE831706064".
+At the end of simple_app's simulation, attestation resulst in the correct authenticated token value: "F147037A5101BD98334B3C7AA4E34C24889F61E8EABDD31836761B50EEB8F311".
 
 This corresponds to attestation (HMAC-SHA256) computed over memory containg exec value 1 (valid proof of execution).
 See utils/get_token_simple_app.py for how this token is generated.
@@ -221,7 +221,7 @@ It should take less than 1ms of simulation to visualize this effect.
 
 <img src="./img/pox_success_example.png" width="900" height="150">
 
-- Simulation window for a Violation example. Violation occurs at instruction PC=E098 causing exec_flag to switch to 0: 
+- Simulation window for a Violation example. Violation occurs at instruction PC=E098 causing exec_flag to switch to 0:
 
 <img src="./img/violation_example.png" width="900" height="150">
 
