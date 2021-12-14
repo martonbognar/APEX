@@ -13,13 +13,14 @@
 #define EXEC_ADDR (ORMAX_ADDR+2)
 
 // ERMIN/MAX_VAL should correspond to address of dummy_function
-#define ERMIN_VAL 0xE0B2
-#define ERMAX_VAL 0xE0C6
-#define ORMIN_VAL 0x200 
+#define ERMIN_VAL ((uint16_t) dummy_function)
+#define ERMAX_VAL (ERMIN_VAL + 0x14)
+#define ORMIN_VAL 0x200
 #define ORMAX_VAL 0x210
 
+#define ATTACKER_ENABLE 0x0070
 
-extern void VRASED (uint8_t *challenge, uint8_t *response, uint8_t operation); 
+extern void VRASED (uint8_t *challenge, uint8_t *response, uint8_t operation);
 
 extern void my_memset(uint8_t* ptr, int len, uint8_t val);
 
@@ -33,11 +34,13 @@ void dummy_function() {
 
 // Should end at 0xe0cc
 void success() {
-    __asm__ volatile("bis     #240,   r2" "\n\t");  
+    printf("Success!\n");
+    __asm__ volatile("bis     #240,   r2" "\n\t");
 }
 
 void fail() {
-    __asm__ volatile("bis     #240,   r2" "\n\t");  
+    printf("Fail!\n");
+    __asm__ volatile("bis     #240,   r2" "\n\t");
 }
 
 
@@ -67,19 +70,34 @@ int main() {
     if(ERmin != ERMIN_VAL || ERmax != ERMAX_VAL || ORmin != ORMIN_VAL || ORmax != ORMAX_VAL || exec == 1) fail();
 
     // Execute ER
-    ((void(*)(void))ERmin)();                      
+    ((void(*)(void))ERmin)();
 
     // EXEC flag should be 1
     exec = *((uint16_t*)(EXEC_ADDR));
-    if(exec != 1) fail();  
+    if(exec != 1) fail();
 
-    // Now modify OR value, causing a violation. 
-    // EXEC flag now should be 0 
+    // Now modify OR value, causing a violation.
+    // EXEC flag now should be 0
     *((uint16_t*)(ORMIN_VAL)) = 0xFFFF;
+
+    #if __ATTACK == 1
+        *((uint16_t*)ATTACKER_ENABLE) = 1;
+    #endif
+
     exec = *((uint16_t*)(EXEC_ADDR));
-    if(exec != 0) fail();  
+
+    printf("Final check (exec %d): ", exec);
+
+    if(exec != 0) fail();
 
     success();
-    
+
     return 0;
+}
+
+int putchar(int c)
+{
+    P1OUT = c;
+    P1OUT |= 0x80;
+    return c;
 }

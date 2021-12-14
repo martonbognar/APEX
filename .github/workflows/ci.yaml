@@ -1,0 +1,24 @@
+name: CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  bench:
+    name: ${{ matrix.target }}
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [
+          './violation-forge-or-base.sh',
+          './violation-forge-or-attack.sh',
+        ]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Install dependencies
+        run: sudo apt-get install bison pkg-config gawk clang flex gcc-msp430 iverilog expect-dev libffi-dev -y
+      - name: Run test bench
+        run: cd scripts && ${{ matrix.target }}

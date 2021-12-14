@@ -1,6 +1,6 @@
 # makfile configuration
 NAME            = vrased
-OBJECTS         = vrased.o ../vrased.swatt 
+OBJECTS         = vrased.o ../vrased.swatt
 
 # Choose GCC toolchain prefix ('msp430' for MSPGCC / 'msp430-elf' for GCC RedHat/TI)
 MSPGCC_PFX      = msp430
@@ -13,6 +13,9 @@ CC              = ${MSPGCC_PFX}-gcc
 OBJCOPY		= ${MSPGCC_PFX}-objcopy
 OBJDUMP         = ${MSPGCC_PFX}-objdump
 OBJSIZE         = ${MSPGCC_PFX}-size
+
+# Attack test
+ATTACK ?= 0
 
 .PHONY: all FORCE clean download download-jtag download-bsl dist
 
@@ -34,10 +37,9 @@ ${NAME}.size: ${NAME}.elf
 	${OBJSIZE}  $^ >$@
 
 ${NAME}.o: main.c
-	${CC} ${CFLAGS} -c -o $@ main.c
+	${CC} ${CFLAGS} "-D__ATTACK=${ATTACK}" -c -o $@ main.c
 
 clean:
 	rm -f ${NAME} ${NAME}.a43 ${NAME}.lst ${NAME}.elf ${NAME}.size *.o pmem.def
 
 #project dependencies
-

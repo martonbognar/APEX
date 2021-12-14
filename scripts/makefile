@@ -1,7 +1,7 @@
 default :
 
 install-clean :
-	rm -rf ./verif-tools/verilog2smv-1.1.2 ./verif-tools/verilog2smv.sh	
+	rm -rf ./verif-tools/verilog2smv-1.1.2 ./verif-tools/verilog2smv.sh
 
 install :
 	cd verif-tools ; \
@@ -15,6 +15,12 @@ simple_app :
 
 violation_forge_OR :
 	sh build/run "violation_forge_OR" true
+
+simple_app_sim :
+	sh build/run "simple_app" false
+
+violation_forge_OR_sim :
+	sh build/run "violation_forge_OR" false
 
 violation_forge_ER :
 	sh build/run "violation_forge_ER" true
