@@ -1,248 +1,81 @@
-# APEX:
+# Security analysis of APEX
 
-##### APEX paper (USENIX Security'20): https://www.usenix.org/conference/usenixsecurity20/presentation/nunes
+[![CI](https://github.com/martonbognar/apex-gap/actions/workflows/ci.yaml/badge.svg)](https://github.com/martonbognar/apex-gap/actions/workflows/ci.yaml)
 
-Modern society is increasingly surrounded by, and is growing accustomed to, a wide range of Cyber-Physical Systems (CPS),Internet-of-Things (IoT), andsmartdevices. They often perform safety-critical functions, e.g., personal medical devices, automotive CPS as well as industrial and residential automation (e.g., sensor-alarm combinations). On the lower end of the scale, these devices are small, cheap and specialized sensors and/or actuators. They tend to be equipped with small anemic CPU, have small amounts of memory and run simple software. If such devices are left unprotected, consequences of forged sensor readings or ignored actuation commands can be catastrophic, particularly, in safety-critical settings. This prompts the following three questions:(1) How to trust data produced,or verify that commands were performed, by a simple remote embedded device?, (2) How to bind these actions/results tothe execution of expected software? and,(3) Can (1) and (2) be attained even if all software on a device could be modified and/or compromised?
+This repository contains part of the source code accompanying our paper "Mind
+the Gap: Studying the Insecurity of Provably Secure Embedded Trusted Execution
+Architectures" to appear at the IEEE Symposium on Security and Privacy 2022.
+More information on the paper and links to other investigated systems can be
+found in the top-level [gap-attacks](https://github.com/martonbognar/gap-attacks) repository.
 
-In  this  work  we  answer  these  questions  by  designing, showing security of, and formally verifying, APEX: Architecture Proofs of Execution (formally known as VAPE -- we use VAPE and APEX interchangably in this repo). To the best of our knowl-edge, this is the first of its kind result for low-end embeddedsystems. Our work has a range of applications, especially, to authenticated sensing and trustworthy actuation, which are increasingly relevant in the context of safety-critical systems. APEX architecture is publicly available and our evaluation indicates that it incurs low overhead, affordable even for very low-end embedded devices, e.g., those based on TI MSP430 or AVR ATmega processors.
+> M. Bognar, J. Van Bulck, and F. Piessens, "Mind the Gap: Studying the Insecurity of Provably Secure Embedded Trusted Execution Architectures," in 2022 IEEE Symposium on Security and Privacy (S&P).
 
-### APEX Directory Structure
+**:heavy_check_mark: Continuous integration.**
+A full reproducible build and reference output for the APEX attack
+experiments, executed via a cycle-accurate `iverilog` simulation of the
+openMSP430 core, can be viewed in the [GitHub Actions log](https://github.com/martonbognar/apex-gap/actions).
+We also integrated APEX's machine-checked proofs into the CI framework,
+showing that our attack remains entirely undetected by the current proof
+strategy.
 
-	├── msp_bin
-	├── openmsp430
-	│   ├── contraints_fpga
-	│   ├── fpga
-	│   ├── msp_core
-	│   ├── msp_memory
-	│   ├── msp_periph
-	│   └── simulation
-	├── scripts
-	│   ├── build
-	│   ├── build-verif
-	│   └── verif-tools
-	├── simple_app
-	│   └── simulation
-	├── test
-	│   └── simulation
-	├── utils
-	├── verification_specs
-	│   └── soundness_and_security_proofs
-	├── verifier
-	├── violation_forge_ER
-	│   └── simulation
-	├── violation_forge_META
-	│   └── simulation
-	├── violation_forge_OR
-	│   └── simulation
-	└── vrased
-		├── hw-mod
-		│   └── hw-mod-auth
-		└── sw-att
-		    └── hacl-c
+## Overview
 
-## Dependencies Installation
+### Missing attacker capabilities
 
-Environment (processor and OS) used for development and verification:
-Intel i7-3770
-Ubuntu 18.04.3 LTS
+| Paper reference | Proof-of-concept attack | Patch? | Description |
+|-----------------|---------------|:-------------:|-------------|
+| VI-C1           | [./violation-forge-or-attack.sh](https://github.com/martonbognar/apex-gap/blob/master/scripts/violation-forge-or-attack.sh) | :x: | Secure metadata corruption with a peripheral. |
 
-Dependencies on Ubuntu:
+## Source code organization
 
-		sudo apt-get install bison pkg-config gawk clang flex gcc-msp430 iverilog tcl-dev
-		cd scripts
-		sudo make install
+This repository is a fork of the upstream
+[sprout-uci/apex](https://github.com/sprout-uci/apex)
+repository that contains the source code of a verifiable remote attestation
+hardware-software co-design with proofs of execution, described in the following paper.
 
-## Building APEX Software
-To generate the Microcontroller program memory configuration containing VRASED trusted software (SW-Att) and sample applications we are going to use the Makefile inside the scripts directory:
+> I. D. O. Nunes, K. Eldefrawy, N. Rattanavipanon, and G. Tsudik, "APEX: A verified architecture for proofs of execution on remote devices under full software compromise,” in 29th USENIX Security Symposium, 2020, pp. 771–788.
 
-        cd scripts
+The original upstream APEX system is accessible via commit
+[`748e440`](https://github.com/martonbognar/apex-gap/commit/748e440308c36dc927b9f5fa160a3f535ed139b3)
+and earlier. All subsequent commits implement our test framework and
+the proof-of-concept attack.
 
-This repository accompanies 4 test-cases: simple_app, violation_forge_ER, violation_forge_OR, violation_forge_META. (See [Description of Provided test-cases] for details on each test-case)
-These test-cases correspond to one successfull proof of execution (PoX) and 3 cases where PoX fails due to a violation that could be used to attack the correctness of the execution.
-To build APEX for a specific test-case run:
+## Attack code and experimental setup
 
-        make "name of test-case"
+Our attack is integrated into the _untrusted_ APEX code.
+Specifically, we extended the untrusted APEX invocation code in
+[`main.c`](violation_forge_OR/main.c#L83-L85) of the output data violation forge
+example (`violation_forge_OR`).
 
-For instance:
+In this program, the attacker attempts to modify the output of the attested
+function after its execution, which causes the EXEC flag to be invalidated (zeroed).
+In our attack, we activate our peripheral after this violation, which will
+put a value of `1` on the peripheral bus when the EXEC flag is read,
+masking the zero value and hiding the access violation,
+ultimately making the test case fail.
 
-        make simple_app
+## Installation
 
-to build the software including the binaries of simple_app test-case.
-Note that this step will not run any simulation, but simply generate the MSP430 binaries corresponding to the test-case of choice.
-As a result of the build, two files pmem.mem and smem.mem should be created inside msp_bin directory:
+The original installation instructions of APEX can be found [here](README-original.md).
 
-- pmem.mem program memory contents corresponding the application binaries
+What follows are minimal instructions to get the experimental environment up and running on Ubuntu (tested on 20.04).
 
-- smem.mem contains SW-Att binaries.
+- Prerequisites:
+  ```bash
+  $ sudo apt-get install bison pkg-config gawk clang flex gcc-msp430 iverilog tcl-dev
+  ```
+- Checkout APEX:
+  ```bash
+  $ git clone https://github.com/martonbognar/apex-gap.git
+  $ cd apex-gap
+  ```
 
-In the next steps, during synthesis, these files will be loaded to the MSP430 memory when we either: deploy APEX on the FPGA or run APEX simulation using VIVADO simulation tools.
+## Running the proof-of-concept attack
 
-If you want to clean the built files run:
+To run the APEX attack, simply proceed as follows:
 
-        make clean
-
-        Note: Latest Build tested using msp430-gcc (GCC) 4.6.3 2012-03-01
-
-To test APEX with a different application you will need to repeat these steps to generate the new "pmem.mem" file and re-run synthesis.
-
-## Creating an APEX project on Vivado and Running Synthesis
-
-This is an example of how to synthesize and prototype APEX using Basys3 FPGA and XILINX Vivado v2019.2 (64-bit) IDE for Linux
-
-- Vivado IDE is available to download at: https://www.xilinx.com/support/download.html
-
-- Basys3 Reference/Documentation is available at: https://reference.digilentinc.com/basys3/refmanual
-
-#### Creating a Vivado Project for APEX
-
-1 - Clone this repository;
-
-2 - Follow the steps in [Building APEX Software](#building-APEX-software) to generate .mem files for the application of your choice.
-
-2- Start Vivado. On the upper left select: File -> New Project
-
-3- Follow the wizard, select a project name and location. In project type, select RTL Project and click Next.
-
-4- In the "Add Sources" window, select Add Files and add all *.v and *.mem files contained in the following directories of this reposiroty:
-
-        openmsp430/fpga
-        openmsp430/msp_core
-        openmsp430/msp_memory
-        openmsp430/msp_periph
-        /vrased/hw-mod
-        /msp_bin
-
-and select Next.
-
-Note that /msp_bin contains the pmem.mem and smem.mem binaries, generated in step [Building APEX Software].
-
-5- In the "Add Constraints" window, select add files and add the file
-
-        openmsp430/contraints_fpga/Basys-3-Master.xdc
-
-and select Next.
-
-        Note: this file needs to be modified accordingly if you are running APEX in a different FPGA.
-
-6- In the "Default Part" window select "Boards", search for Basys3, select it, and click Next.
-
-        Note: if you don't see Basys3 as an option you may need to download Basys3 to your Vivado installation.
-
-7- Select "Finish". This will conclude the creation of a Vivado Project for APEX.
-
-Now we need to configure the project for systhesis.
-
-8- In the PROJECT MANAGER "Sources" window, search for openMSP430_fpga (openMSP430_fpga.v) file, right click it and select "Set as Top".
-This will make openMSP430_fpga.v the top module in the project hierarchy. Now its name should appear in bold letters.
-
-9- In the same "Sources" window, search for openMSP430_defines.v file, right click it and select Set File Type and, from the dropdown menu select "Verilog Header".
-
-Now we are ready to synthesize openmsp430 with APEX hardware the following step might take several minutes.
-
-10- On the left menu of the PROJECT MANAGER click "Run Synthesis", select execution parameters (e.g, number of CPUs used for synthesis) according to your PC's capabilities.
-
-11- If synthesis succeeds, you will be prompted with the next step to "Run Implementation". You *do not* to "Run Implementation" if you only want simulate APEX.
-"Run implementation" is only necessary if your purpose is to deploy APEX on an FPGA.
-
-If you want to deploy APEX on an FPGA, continue following the instructions on [Deploying APEX on Basys3 FPGA].
-
-If you want to simulate APEX using VIVADO sim-tools, continue following the instructions on [Running APEX on Vivado Simulation Tools].
-
-## Running APEX on Vivado Simulation Tools
-
-After completing the steps 1-10 in [Creating a Vivado Project for APEX]:
-
-1- In Vivado, click "Add Sources" (Alt-A), then select "Add or create simulation sources", click "Add Files", and select everything inside openmsp430/simulation.
-
-2- Now, navigate "Sources" window in Vivado. Search for "tb_openMSP430_fpga", and *In "Simulation Sources" tab*, right-click "tb_openMSP430_fpga.v" and set its file type as top module.
-
-3- Go back to Vivado window and in the "Flow Navigator" tab (on the left-most part of Vivado's window), click "Run Simulation", then "Run Behavioral Simulation".
-
-4- On the newly opened simulation window, select a time span for your simulation to run (see times for each default test-case below) and the press "Shift+F2" to run.
-
-5- In the green wave window you will see values for several signals. The imporant ones are "exec", and "pc[15:0]". pc cointains the program counter value. exec corresponds to the value of APEX's exec flag, as described in the paper.
-
-In Vivado simulation, for all test-cases provided by default, the final value of pc[0:15] should correspond to the instruction address inside "success" function (i.e., the program should halt inside "success" function).
-
-To determine the address of an instruction, e.g, addresses of the "success" function as well start and end addresses of ER (values of ER_min and ER_max, per APEX's paper) one can check the compilation file at scripts/tmp-build/XX/vrased.lst  (where XX is the name of the test-case, i.e., if you ran "make simple_app", XX=simple_app). In this file search for the name of the function of interest, e.g., "success" or "dummy_function", etc.
-
-#### NOTE: To simulate a different test-case you need to re-run "make test-case_name" to generate the corresponding pmem.mem file and re-run the synthesis step (step 10 in [Creating a Vivado Project for APEX]) on Vivado.
-
-## Deploying APEX on Basys3 FPGA
-
-1- After Step 10 in [Creating a Vivado Project for APEX], select "Run Implementation" and wait until this process completes (typically takes around 1 hour).
-
-2- If implementation succeeds, you will be prompted with another window, select option "Generate Bitstream" in this window. This will generate the bitstream that is used to step up the FPGA according to VRASED hardware and software.
-
-3- After the bitstream is generated, select "Open Hardware Manager", connect the FPGA to you computer's USB port and click "Auto-Connect".
-Your FPGA should be now displayed on the hardware manager menu.
-
-        Note: if you don't see your FPGA after auto-connect you might need to download Basys3 drivers to your computer.
-
-4- Right-click your FPGA and select "Program Device" to program the FPGA.
-
-## Description of Provided test-cases
-
-	For details on how APEX controls the exec flag to generate unforgeable proofs of execution (PoX) please check APEX paper.
-
-#### 1- simple_app:
-
-Corresponds to a toy proof of execution, i.e., (1) execute "dummy_function", (2) compute proof of execution token via attestation.
-
-At the end of simple_app's simulation, attestation resulst in the correct authenticated token value: "F811AD99457806F6FDDDE8E88B274AE1313249B1BC9A92468CA99D58F3D1BABD".
-
-This corresponds to attestation (HMAC-SHA256) computed over memory containg exec value 1 (valid proof of execution).
-See utils/get_token_simple_app.py for how this token is generated.
-
-NOTE: Attestation computation takes 753ms of simulation. Simulation of 753ms may take up to an hour to complete. Zooming out the the waves windows can help in speeding up the process.
-
-#### 2- violation_forge_ER:
-
-Corresponds to a test-case where code in region ER is overwritten after its execution, exec_flag value switches to 0 due to the violation.
-
-It should take less than 1ms of simulation to visualize this effect.
-
-#### 3- violation_forge_OR:
-
-Corresponds to a test-case where result in OR region is overwritten after ER executed. It should take less than 1ms to complete this simulation.
-
-It should take less than 1ms of simulation to visualize this effect.
-
-
-#### 4- violation_forge_META:
-
-Corresponds to a test-case where METADATA value is overwritten after ER executed. It should take less than 1ms to complete this simulation.
-
-It should take less than 1ms of simulation to visualize this effect.
-
-#### 5- Examples of simulation test-cases are provided below.
-
-- Simulation window for a valid PoX with simple_app test-case. exec_flag remains 1 until the start of attestation (PC=E000 is the first instruction in attestation code):
-
-<img src="./img/pox_success_example.png" width="900" height="150">
-
-- Simulation window for a Violation example. Violation occurs at instruction PC=E098 causing exec_flag to switch to 0:
-
-<img src="./img/violation_example.png" width="900" height="150">
-
-#### FPGA Runs
-
-If you are running these test-cases on the Basys3 FPGA, by default "exec_flag" is hard-wired to LED8.
-In "simple_app", LED8 should remain ON (exec_flag=1, i.e., valid proof of execution).
-In "violation_forge_*", LED8 should turn OFF (exec_flag=1, i.e., valid proof of execution).
-
-#### NOTE: To simulate (or run a test with and FPGA) using a different test-case you need to re-run "make test-case_name" to generate the corresponding pmem.mem file and re-run the synthesis step (step 10 in [Creating a Vivado Project for APEX]) on Vivado.
-
-## Running APEX Verification
-
-To check HW-Mod against VRASED and APEX LTL subproperties using NuSMV run:
-
-        make verify
-
-Note that running make verify proofs may take several minutes (Time may very widely depending on the setup, e.g., 22 minutes on a Ubuntu18 VM with 4 cores and 4GB of RAM).
-
-To run APEX and VRASED end-to-end implementation proofs check the readme file in:
-
-        verification_specs/soundness_and_security_proofs
-
-To run end-to-end proofs you also need to install Spot: https://spot.lrde.epita.fr/install.html
+```bash
+$ cd scripts
+$ ./violation-forge-or-base.sh    # run the violation forge example without the attack
+$ ./violation-forge-or-attack.sh  # run the violation forge example with the attack
+```
