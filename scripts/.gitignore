@@ -1,3 +1,5 @@
 tmp-build
+build-verif
 *.vcd
 output.txt
+verif-tools/verilog2smv-1.1.2
